@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="La mia spesa">
-  <meta name="description" content="La mia spesa: scanner rapido, BARCODE 3, dialogo vocale, sconti e lista prodotti.">
+  <meta name="description" content="La mia spesa: prodotti Coop, stima punti 2026, scanner, dialogo vocale e backup.">
   <title>La mia spesa</title>
   <style>
     :root{color-scheme:light;--ink:#172c47;--muted:#65778b;--bg:#f5f7fc;--card:#fff;--line:#e5eaf1;--blue:#3669e8;--blue2:#174cbd;--radius:22px}
@@ -236,12 +236,27 @@
     .backup-section{border:1.5px solid #a9c9b9;background:#f9fffb}
     .backup-actions{display:grid;gap:9px;margin-top:13px}
     .backup-import-label{display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
+
+    .coop-section{border:2px solid #a4d7b7;background:#f5fcf7}
+    .coop-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+    .coop-grid div{background:white;border:1px solid #d7e9de;border-radius:14px;padding:13px}
+    .coop-grid span{display:block;font-size:12px;color:#506a59;line-height:1.4}
+    .coop-grid strong{display:block;margin-top:5px;font-size:23px;color:#175f38}
+    .coop-badge{display:inline-block;border-radius:7px;background:#d9f2e1;color:#145b31;padding:4px 7px;font-size:12px;font-weight:750;margin:7px 0 3px}
+    .item.coop-item{border-left:4px solid #258048;background:#f2fbf5;padding-left:10px}
+    .coop-select{width:100%;max-width:100%;min-width:0;min-height:44px;font-size:16px;color:#173f29;background:white;border:1px solid #9eb5a6;border-radius:9px;padding:8px;margin-top:7px}
+    .coop-choice-label{font-size:11px;color:#65778b;margin:8px 0 0}
+    .coop-section summary{cursor:pointer;font-weight:700;padding:12px 0}
+    .coop-section details p{font-size:13px;line-height:1.55}
+    .coop-section progress{width:100%;accent-color:#258048;height:16px;margin-top:10px}
+    .coop-section a{overflow-wrap:anywhere;color:#145b31}
+    .coop-unknown{font-size:12px;color:#8c5b11;margin:7px 0}
   </style>
 </head>
 <body>
  <main class="wrap">
   <header class="top">
-   <div><p class="eyebrow">🧪 Versione Laboratorio · Backup 1</p><h1>La mia spesa</h1></div>
+   <div><p class="eyebrow">🧪 Laboratorio · Coop 1</p><h1>La mia spesa</h1></div>
    <div class="logo" aria-hidden="true">🛒</div>
   </header>
   <section class="summary" aria-label="Riepilogo spesa">
@@ -251,6 +266,34 @@
     <div><span>Risparmio</span><strong id="saving">0,00 €</strong></div>
     <div><span>Prodotti</span><strong id="count">0</strong></div>
    </div>
+  </section>
+
+  <section class="section coop-section" aria-labelledby="coop-title">
+   <h2 id="coop-title">🟢 I tuoi prodotti Coop</h2>
+   <p class="hint">Coop Alleanza 3.0 · Raccolta 2026</p>
+   <div class="coop-grid" aria-live="polite">
+    <div><span>Totale marchio Coop</span><strong id="coop-total">0,00 €</strong></div>
+    <div><span>Punti base stimati</span><strong id="coop-points">0</strong></div>
+    <div><span>Importo valido per punti</span><strong id="coop-eligible">0,00 €</strong></div>
+    <div><span>Pezzi a marchio Coop</span><strong id="coop-count">0</strong></div>
+   </div>
+   <p class="hint" id="coop-status" role="status"></p>
+   <p class="hint">I prodotti con “Coop” nel nome o nel marchio vengono segnalati automaticamente: verifica la scelta nel carrello. Gli articoli non identificati non entrano nel conteggio Coop.</p>
+   <button class="secondary" type="button" id="coop-review" style="width:100%;margin-top:12px">Controlla i marchi nel carrello ↓</button>
+   <details><summary>Obiettivo di spesa sui prodotti Coop</summary>
+    <label for="coop-goal">Importo da raggiungere (€)</label>
+    <input type="text" inputmode="decimal" id="coop-goal" placeholder="Es. 20,00">
+    <progress id="coop-progress" max="100" value="0" aria-label="Avanzamento obiettivo Coop"></progress>
+    <p id="coop-goal-status" class="hint" aria-live="polite"></p>
+    <p class="hint">Promemoria personale sul totale Coop, anche dei prodotti esclusi dai punti. Non applica buoni e non garantisce un premio: controlla i prodotti ammessi nella singola promozione.</p>
+   </details>
+   <details><summary>Regole, esclusioni e punti extra</summary>
+    <p>Dal 1° febbraio al 31 dicembre 2026: 1 punto per ogni euro intero del totale Coop ammesso, dopo gli sconti registrati. Esempio: 12,80 € = 12 punti base. Il conteggio è una stima per un unico scontrino; la conferma è sullo scontrino Coop.</p>
+    <p>Seleziona <strong>“Coop · escluso dai punti”</strong> per frutta e verdura sfuse, latte infanzia tipo 1, farmaci anche omeopatici e veterinari, rivista Fiorfiore, carte regalo Coop, prodotti Buon fine e Happy Hour Ristoro, shopper anche riutilizzabili, riparazioni e spese post acquisto.</p>
+    <p><strong>Punti doppi, coupon e bonus non sono inclusi.</strong> Le categorie promozionali cambiano ogni mese.</p>
+    <p><strong>Contaspesa separato:</strong> la spesa mensile ammessa, anche di altre marche, dà punti extra. Soglie: 200 € → 15 punti; 300 € → 25; 400 € → 50; 500 € → 75; 600 € → 100; 700 € → 125; 800 € → 150; 900 € → 175; da 1.000 € → 225. Sono fasce, non bonus da sommare. Consulta il saldo mensile ufficiale nell’app Coop o sullo scontrino; questo carrello non ricostruisce gli acquisti del mese.</p>
+    <p><a href="https://www.coopalleanza3-0.it/fare-spesa/premiati-con-coop/raccolta-punti.html" target="_blank" rel="noopener noreferrer">Regole ufficiali Coop Alleanza 3.0</a> · verificate il 23 ottobre 2026.</p>
+   </details>
   </section>
 
   <section class="section backup-section" aria-labelledby="backup-title">
@@ -272,6 +315,7 @@
    <div class="voice-questions">
     <button type="button" data-voice-question="Quanto ho speso finora?">💶 Quanto ho speso?</button>
     <button type="button" data-voice-question="Quanti prodotti ho nel carrello?">🛒 Quanti prodotti?</button>
+    <button type="button" data-voice-question="Quanti punti Coop ho?">🟢 Punti Coop stimati</button>
     <button type="button" data-voice-question="Quanto ho risparmiato?">🏷️ Quanto ho risparmiato?</button>
     <button type="button" data-voice-question="Quali prodotti ci sono nel carrello?">🧾 Cosa c’è nel carrello?</button>
    </div>
@@ -501,7 +545,8 @@
  }
 
  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.items)){
-   state.items=d.items.filter(x=>x&&typeof x.name==='string'&&Number.isSafeInteger(x.cents)&&x.cents>=0&&Number.isInteger(x.qty)&&x.qty>0).map(x=>({id:String(x.id),name:x.name.slice(0,90),cents:x.cents,qty:Math.min(999,x.qty),productDiscount:Number.isInteger(x.productDiscount)?Math.max(0,Math.min(100,x.productDiscount)):0,lockedFinal:x.lockedFinal===true,skipGeneralDiscount:x.skipGeneralDiscount===true,source:['voice','barcode'].includes(x.source)?x.source:undefined}));
+   state.items=d.items.filter(x=>x&&typeof x.name==='string'&&Number.isSafeInteger(x.cents)&&x.cents>=0&&Number.isInteger(x.qty)&&x.qty>0).map(x=>({id:String(x.id),name:x.name.slice(0,90),cents:x.cents,qty:Math.min(999,x.qty),productDiscount:Number.isInteger(x.productDiscount)?Math.max(0,Math.min(100,x.productDiscount)):0,lockedFinal:x.lockedFinal===true,skipGeneralDiscount:x.skipGeneralDiscount===true,source:['voice','barcode'].includes(x.source)?x.source:undefined,coopChoice:['coop','excluded','other','unknown'].includes(x.coopChoice)?x.coopChoice:undefined,brands:typeof x.brands==='string'?x.brands.slice(0,150):'',barcode:typeof x.barcode==='string'?x.barcode:''}));
+   state.coopGoal=Number.isSafeInteger(d.coopGoal)&&d.coopGoal>=0?d.coopGoal:0;
    state.discount=Number.isFinite(d.discount)?Math.max(0,Math.min(100,Math.round(d.discount))):0;
  }}catch(e){}
  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));saved=true;}catch(e){if(!saved){showToast('Salvataggio non disponibile in questo browser.');saved=true;}}}
@@ -518,6 +563,68 @@
  function showToast(s){const t=$('toast');t.textContent=s;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400);}
  function unitNet(x){return Math.round(x.cents*(100-(x.productDiscount||0))/100);}
  function currentCartCents(){const after=state.items.reduce((n,x)=>n+unitNet(x)*x.qty,0);const base=state.items.reduce((n,x)=>n+(x.lockedFinal||x.skipGeneralDiscount?0:unitNet(x)*x.qty),0);return after-Math.round(base*state.discount/100);}
+
+ function coopClass(x){
+   if(['coop','excluded','other','unknown'].includes(x.coopChoice))return x.coopChoice;
+   if(!/\bcoop\b/i.test((x.brands||'')+' '+x.name))return 'unknown';
+   if(/\b(?:shopper|shoppers|buon\s*fine|happy\s*hour|carta\s*regalo|carte\s*regalo)\b/i.test(x.name))return 'excluded';
+   return 'coop';
+ }
+ function coopTotals(){
+   // Allocate the general discount with largest remainders, in integer cents.
+   const rows=state.items.map(x=>({x,net:unitNet(x)*x.qty,base:x.lockedFinal||x.skipGeneralDiscount?0:unitNet(x)*x.qty,cut:0}));
+   const discount=Math.round(rows.reduce((a,r)=>a+r.base,0)*state.discount/100);
+   let allocated=0;
+   for(const r of rows){const raw=r.base*state.discount;r.cut=Math.floor(raw/100);r.rem=raw%100;allocated+=r.cut;}
+   const ordered=rows.filter(r=>r.base>0).slice().sort((a,b)=>b.rem-a.rem);
+   for(let i=0;i<discount-allocated;i++)ordered[i].cut++;
+   let total=0,eligible=0,count=0,unknown=0,auto=0;
+   for(const r of rows){const kind=coopClass(r.x),value=r.net-r.cut;
+     if(kind==='coop'||kind==='excluded'){total+=value;count+=r.x.qty;if(!r.x.coopChoice)auto++;}
+     if(kind==='coop')eligible+=value;
+     if(kind==='unknown')unknown++;
+   }
+   return {total,eligible,count,unknown,auto,points:Math.floor(eligible/100)};
+ }
+ function coopPeriodActive(){
+   const day=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   return day>='2026-02-01'&&day<='2026-12-31';
+ }
+ function renderCoop(){
+   const c=coopTotals();
+   $('coop-total').textContent=money(c.total);$('coop-eligible').textContent=money(c.eligible);
+   $('coop-count').textContent=c.count;$('coop-points').textContent=coopPeriodActive()?c.points:'—';
+   $('coop-status').textContent=(coopPeriodActive()?'Stima dei punti base, senza bonus.':'Raccolta 2026 fuori validità: aggiorna le regole per stimare i punti.')+
+     (c.unknown?' '+c.unknown+' voci con marchio da verificare.':'')+(c.auto?' '+c.auto+' voci Coop rilevate automaticamente: controllale.':'');
+   if(document.activeElement!==$('coop-goal'))$('coop-goal').value=state.coopGoal?(state.coopGoal/100).toFixed(2).replace('.',','):'';
+   $('coop-progress').value=state.coopGoal?Math.min(100,c.total/state.coopGoal*100):0;
+   $('coop-goal-status').textContent=!state.coopGoal?'Inserisci la soglia della promozione da tenere d’occhio.':c.total>=state.coopGoal?'Obiettivo personale raggiunto. Verifica le condizioni della promozione.':'Mancano '+money(state.coopGoal-c.total)+' al tuo obiettivo Coop.';
+ }
+ function coopControls(x,li){
+   const kind=coopClass(x),box=document.createElement('div');
+   if(kind==='coop'||kind==='excluded'){
+     li.classList.add('coop-item');const badge=document.createElement('span');badge.className='coop-badge';
+     badge.textContent=(x.coopChoice?'Marchio Coop':'Coop rilevato · verifica')+(kind==='excluded'?' · escluso punti':'');box.append(badge);
+   }
+   const label=document.createElement('label');label.className='coop-choice-label';label.textContent='Marchio e punti';
+   const select=document.createElement('select');select.className='coop-select';select.setAttribute('aria-label','Marchio e punti: '+x.name);
+   for(const [value,title] of [['unknown','Marchio da verificare'],['coop','Coop · valido per i punti'],['excluded','Coop · escluso dai punti'],['other','Altra marca']]){
+     const o=document.createElement('option');o.value=value;o.textContent=title;select.append(o);
+   }
+   select.value=kind;
+   select.addEventListener('change',()=>{
+     x.coopChoice=select.value;
+     if(x.barcode&&barcodeHistory[x.barcode]){barcodeHistory[x.barcode].coopChoice=x.coopChoice;saveBarcodeHistory();}
+     save();render();showToast('Marchio aggiornato');
+   });
+   label.append(select);box.append(label);return box;
+ }
+ $('coop-review').addEventListener('click',()=>$('list-title').scrollIntoView({behavior:'smooth',block:'start'}));
+ $('coop-goal').addEventListener('change',()=>{
+   const value=$('coop-goal').value.trim();const cents=value===''?0:parsePrice(value);
+   if(cents===null){showToast('Inserisci un importo valido');return;}
+   state.coopGoal=cents;save();renderCoop();
+ });
  function render(){
    const s=state.items.reduce((n,x)=>n+x.cents*x.qty,0);
    const afterItemDiscount=state.items.reduce((n,x)=>n+unitNet(x)*x.qty,0);
@@ -542,12 +649,13 @@
      const qty=document.createElement('span');qty.className='item-qty';qty.textContent=x.qty;controls.append(qty);
      controls.append(btn('+',()=>adjust(x.id,1),'Aumenta quantità '+x.name));
      controls.append(btn('✎',()=>edit(x.id),'Modifica '+x.name));
-     main.append(nm,pr,controls);
+     main.append(nm,pr,controls,coopControls(x,li));
      const subtotal=document.createElement('div');subtotal.className='item-sum';subtotal.textContent=money(unitNet(x)*x.qty);
      const del=document.createElement('button');del.type='button';del.className='trash';del.textContent='×';del.setAttribute('aria-label','Elimina '+x.name);
      del.addEventListener('click',()=>{state.items=state.items.filter(y=>y.id!==x.id);save();render();showToast('Prodotto eliminato');});
      li.append(main,subtotal,del);$('items').append(li);
    }
+   renderCoop();
    if(receiptDraft)renderReceiptComparison();
  }
  function validPercent(value){
@@ -581,7 +689,7 @@
  $('clear').addEventListener('click',()=>{if(confirm('Vuoi davvero eliminare tutti i prodotti?')){state.items=[];save();render();showToast('Lista svuotata');}});
  $('export').addEventListener('click',()=>{
    const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
-   const lines=['Prodotto;Prezzo registrato (EUR);Sconto prodotto (%);Quantita;Totale prodotto (EUR);Prezzo finale da scontrino',...state.items.map(x=>[esc(x.name),(x.cents/100).toFixed(2).replace('.',','),x.productDiscount||0,x.qty,(unitNet(x)*x.qty/100).toFixed(2).replace('.',','),x.lockedFinal?'SI':'NO'].join(';'))];
+   const lines=['Prodotto;Prezzo registrato (EUR);Sconto prodotto (%);Quantita;Totale prodotto (EUR);Prezzo finale da scontrino;Marchio e punti',...state.items.map(x=>[esc(x.name),(x.cents/100).toFixed(2).replace('.',','),x.productDiscount||0,x.qty,(unitNet(x)*x.qty/100).toFixed(2).replace('.',','),x.lockedFinal?'SI':'NO',esc(({coop:'Coop - valido punti',excluded:'Coop - escluso punti',other:'Altra marca',unknown:'Da verificare'})[coopClass(x)])].join(';'))];
    const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='la-mia-spesa.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);showToast('Lista esportata');
  });
  // Sulle etichette a peso il PREZZO €/kg NON e' l'importo da inserire.
@@ -1847,6 +1955,7 @@
  // Lettura EAN: usa html5-qrcode solo quando richiesto (compatibile con Safari iOS).
  const BARCODE_KEY='la-mia-spesa-lab-codici-v1';
  let barcodeScanner=null,barcodeActive=false,barcodeReady=false,barcodeLocked=false,barcodeCurrent='',barcodeEpoch=0,barcodeVideoObserver=null,barcodeWatch=null;
+ let barcodeBrands='',barcodeCoopChoice;
  let barcodeHistory={};
  try{const v=JSON.parse(localStorage.getItem(BARCODE_KEY));if(v&&typeof v==='object'&&!Array.isArray(v))barcodeHistory=v;}catch(e){}
  function saveBarcodeHistory(){try{localStorage.setItem(BARCODE_KEY,JSON.stringify(barcodeHistory));}catch(e){}}
@@ -1934,7 +2043,7 @@
  }
  async function barcodePresent(code){
    const rid=++barcodeReady;
-   barcodeCurrent=code;
+   barcodeCurrent=code;barcodeBrands='';barcodeCoopChoice=undefined;
    $('barcode-form').hidden=false;$('barcode-code').textContent=code;
    $('barcode-name').value='';$('barcode-price').value='';$('barcode-qty').value='1';
    let origin='Non trovato tra i prodotti già registrati.';
@@ -1943,7 +2052,7 @@
    const saved=exact||(family?barcodeHistory[family]:null);
    $('barcode-name-status').textContent='Se il nome non viene trovato, fotografalo, dettalo o scrivilo. L’app lo ricorderà.';
    if(saved&&typeof saved.name==='string'){
-     $('barcode-name').value=saved.name;
+     $('barcode-name').value=saved.name;barcodeBrands=typeof saved.brands==='string'?saved.brands:'';barcodeCoopChoice=exact?saved.coopChoice:undefined;
      if(exact&&Number.isInteger(saved.cents))$('barcode-price').value=(saved.cents/100).toFixed(2).replace('.',',');
      origin=exact?'Nome recuperato dal tuo iPhone; il vecchio prezzo potrebbe essere cambiato.':'Nome recuperato da un codice simile dello stesso negozio. Verifica che il prodotto coincida; il prezzo si legge ogni volta.';
    }
@@ -1961,7 +2070,7 @@
      try{
        const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'?fields=product_name,product_name_it,brands',{signal:AbortSignal.timeout(7500)});
        if(r.ok){const data=await r.json();if(rid!==barcodeReady)return;
-         const product=data?.product;const name=String(product?.product_name_it||product?.product_name||'').trim();
+         const product=data?.product;barcodeBrands=String(product?.brands||'').slice(0,150);const name=String(product?.product_name_it||product?.product_name||'').trim();
          if(name){$('barcode-name').value=name.slice(0,90);$('barcode-origin').textContent='Nome recuperato da Open Food Facts (catalogo pubblico). Il prezzo non proviene dal catalogo.';}
          else $('barcode-origin').textContent='Prodotto non trovato nel catalogo: inserisci il nome.';
        } else if(rid===barcodeReady)$('barcode-origin').textContent='Catalogo prodotti non disponibile: inserisci il nome.';
@@ -2063,8 +2172,8 @@
    if(!gtinValid(code)||!name||cents===null||cents<=0||!Number.isInteger(qty)||qty<1||qty>999){
      barcodeStatus('⚠️ Verifica nome, prezzo finale maggiore di zero e quantità.');return;
    }
-   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name:name.slice(0,90),cents,qty,productDiscount:0,lockedFinal:true,skipGeneralDiscount:true,source:'barcode'});
-   barcodeHistory[code]={name:name.slice(0,90),cents,when:Date.now()};
+   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name:name.slice(0,90),cents,qty,productDiscount:0,lockedFinal:true,skipGeneralDiscount:true,source:'barcode',barcode:code,brands:barcodeBrands,coopChoice:barcodeCoopChoice});
+   barcodeHistory[code]={name:name.slice(0,90),cents,when:Date.now(),brands:barcodeBrands,coopChoice:barcodeCoopChoice};
    const family=barcodeFamilyKey(code);
    if(family)barcodeHistory[family]={name:name.slice(0,90),when:Date.now()}; // Mai trasferire il vecchio prezzo dei prodotti a peso.
    saveBarcodeHistory();save();render();
@@ -2101,6 +2210,7 @@
    const gross=state.items.reduce((n,x)=>n+x.cents*x.qty,0);
    const total=currentCartCents();
    const difference=gross-total;
+   if(/\bcoop\b/.test(t)&&/\b(?:quanto|quanti|totale|punti|speso)\b/.test(t)){const c=coopTotals();return {answer:'I prodotti a marchio Coop registrati ammontano a '+money(c.total)+'. '+(coopPeriodActive()?'Punti base stimati: '+c.points+', senza punti extra.':'La raccolta 2026 è fuori validità.')+(c.unknown?' Ci sono '+c.unknown+' voci con marchio da verificare.':'')};}
    if(/^(?:ripeti|ripeti la risposta|puoi ripetere)$/.test(t))return {answer:voiceLastAnswer||'Non ho ancora dato una risposta. Chiedimi quanto hai speso.'};
    if(/\b(?:quanto|quale|qual e|dimmi|mi dici|totale|a quanto)\b.*\b(?:risparmi|risparmiato|risparmio|sconti ottenuti)\b/.test(t)||/^(?:risparmio|sconti ottenuti)$/.test(t))
      return {answer:count?('Il risparmio stimato sui prodotti registrati è '+money(difference)+'. '+(state.discount?'Attenzione: è attivo anche uno sconto generale del '+state.discount+' per cento.':'Non è attivo uno sconto generale.')):'Il carrello è vuoto: il risparmio è zero.'};
