@@ -256,7 +256,7 @@
 <body>
  <main class="wrap">
   <header class="top">
-   <div><p class="eyebrow">🧪 Laboratorio · Coop 1 · Barcode 4</p><h1>La mia spesa</h1></div>
+   <div><p class="eyebrow">🧪 Laboratorio · Barcode 4 · Prezzo foto</p><h1>La mia spesa</h1></div>
    <div class="logo" aria-hidden="true">🛒</div>
   </header>
   <section class="summary" aria-label="Riepilogo spesa">
@@ -375,6 +375,11 @@
      <div><label for="barcode-price">Prezzo finale (€)</label><input type="text" inputmode="decimal" id="barcode-price" placeholder="Es. 2,06"></div>
      <div><label for="barcode-qty">Quantità</label><input type="number" min="1" max="999" value="1" id="barcode-qty"></div>
     </div>
+    <button type="button" class="secondary" id="barcode-price-read">📷 Leggi il prezzo</button>
+    <input class="camera-input" id="barcode-price-photo" type="file" accept="image/*" capture="environment">
+    <p class="barcode-quiet">Fotografa da vicino il cartellino di questo prodotto. Scegli il prezzo della confezione, non quello al kg. Controlla eventuali condizioni dell’offerta.</p>
+    <p id="barcode-price-status" class="barcode-quiet" role="status" aria-live="polite"></p>
+    <div id="barcode-price-options" class="barcode-buttons" style="flex-wrap:wrap"></div>
     <div class="barcode-name-tools">
       <p class="barcode-quiet" style="margin:3px 0 7px"><strong>Non compare il nome?</strong> La prima volta fotografalo oppure dettalo. Rimarrà associato al codice sul tuo iPhone.</p>
       <label class="secondary barcode-photo-label" for="barcode-name-photo">📷 Fotografa il nome</label>
@@ -2116,6 +2121,7 @@ SOFTWARE.
    try{await track.applyConstraints({advanced:[{torch:!barcodeTorch}]});barcodeTorch=!barcodeTorch;$('barcode-torch').textContent=barcodeTorch?'Luce: accesa':'Luce: spenta';}catch(err){barcodeStatus('Luce non disponibile su questa fotocamera.');}
  });
  async function barcodePresent(code){
+   resetBarcodePricePhoto();
    const rid=++barcodeReady;
    barcodeCurrent=code;barcodeBrands='';barcodeCoopChoice=undefined;
    $('barcode-form').hidden=false;$('barcode-code').textContent=code;
@@ -2188,6 +2194,71 @@ SOFTWARE.
    }
    return bestScore>=5?best.replace(/\s{2,}/g,' ').slice(0,90):'';
  }
+ let barcodePricePhotoToken=0;
+ function resetBarcodePricePhoto(){
+   barcodePricePhotoToken++;
+   $('barcode-price-options').replaceChildren();
+   $('barcode-price-status').textContent='';
+   $('barcode-add').disabled=false;
+ }
+ $('barcode-price-read').addEventListener('click',()=>{
+   barcodeStop();
+   $('barcode-price-photo').click();
+ });
+ $('barcode-price-photo').addEventListener('change',async event=>{
+   const file=event.target.files?.[0];if(!file)return;
+   resetBarcodePricePhoto();
+   const token=barcodePricePhotoToken,code=barcodeCurrent;
+   const current=()=>token===barcodePricePhotoToken&&code===barcodeCurrent;
+   const status=$('barcode-price-status');
+   status.textContent='Leggo il prezzo dalla foto… La prima lettura può richiedere qualche secondo e una connessione internet.';
+   $('barcode-add').disabled=true;
+   let url,worker,canvas;
+   try{
+     await loadTesseract();
+     if(!current())return;
+     url=URL.createObjectURL(file);
+     const img=new Image();
+     await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+     const factor=Math.min(2,2000/Math.max(img.naturalWidth,img.naturalHeight));
+     canvas=document.createElement('canvas');
+     canvas.width=Math.round(img.naturalWidth*factor);canvas.height=Math.round(img.naturalHeight*factor);
+     if(!canvas.width||!canvas.height)throw Error('Foto vuota');
+     canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+     worker=await window.Tesseract.createWorker('ita');
+     const result=await worker.recognize(canvas);
+     if(!current())return;
+     const text=String(result?.data?.text||'');
+     // Elimina percentuali e date prima di cercare importi; i prezzi al kg non sono proposte.
+     const cleaned=text.replace(/\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b/g,' ').replace(/\d+(?:[.,]\d+)?\s*%/g,' ');
+     const seen=new Set();
+     const weighted=weightLabelInfo(cleaned);
+     const rows=cleaned.split('\n');
+     const unit=/\b(?:kg|etto|litro)\b|€\s*\/\s*l\b/i;
+     const shelfText=rows.filter((line,i)=>!unit.test(line)&&!(i>0&&unit.test(rows[i-1])&&!/\d+[.,]\d{2}/.test(rows[i-1]))).join('\n');
+     const proposals=weighted.amountCents!==null?extractPrices(cleaned):extractPrices(shelfText);
+     const prices=proposals.filter(p=>p.cents>0&&p.source!=='kg'&&!seen.has(p.cents)&&seen.add(p.cents)).slice(0,6);
+     if(!prices.length){status.textContent='Non ho trovato un prezzo della confezione. Riprova con una foto più vicina oppure scrivilo nel campo Prezzo finale.';return;}
+     status.textContent='Controlla il cartellino e tocca il prezzo finale di questo prodotto. Nessun importo è stato ancora inserito.';
+     for(const price of prices){
+       const button=document.createElement('button');button.type='button';button.className='secondary';
+       button.textContent='Usa '+money(price.cents);
+       button.addEventListener('click',()=>{
+         if(!current())return;
+         $('barcode-price').value=(price.cents/100).toFixed(2).replace('.',',');
+         status.textContent='Prezzo inserito: '+money(price.cents)+'. Verifica nome e quantità, poi premi Conferma e aggiungi.';
+         $('barcode-price-options').replaceChildren();
+       });
+       $('barcode-price-options').appendChild(button);
+     }
+   }catch(error){if(current())status.textContent='Non riesco a leggere questa foto. Riprova oppure inserisci il prezzo a mano: gli altri dati restano compilati.';}
+   finally{
+     if(current()){$('barcode-add').disabled=false;event.target.value='';}
+     if(worker)try{await worker.terminate();}catch(error){}
+     if(url)URL.revokeObjectURL(url);
+     if(canvas)canvas.width=canvas.height=0;
+   }
+ });
  $('barcode-name-photo').addEventListener('change',async event=>{
    const file=event.target.files?.[0];if(!file)return;
    const rid=barcodeReady, code=barcodeCurrent;
@@ -2245,6 +2316,7 @@ SOFTWARE.
    if(!gtinValid(code)||!name||cents===null||cents<=0||!Number.isInteger(qty)||qty<1||qty>999){
      barcodeStatus('⚠️ Verifica nome, prezzo finale maggiore di zero e quantità.');return;
    }
+   resetBarcodePricePhoto();
    state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name:name.slice(0,90),cents,qty,productDiscount:0,lockedFinal:true,skipGeneralDiscount:true,source:'barcode',barcode:code,brands:barcodeBrands,coopChoice:barcodeCoopChoice});
    barcodeHistory[code]={name:name.slice(0,90),cents,when:Date.now(),brands:barcodeBrands,coopChoice:barcodeCoopChoice};
    const family=barcodeFamilyKey(code);
