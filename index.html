@@ -233,12 +233,15 @@
     .barcode-name-tools .camera-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
     @media(max-width:370px){.barcode-name-tools{grid-template-columns:1fr}}
     @media(max-width:365px){.barcode-fields{grid-template-columns:1fr}}
+    .backup-section{border:1.5px solid #a9c9b9;background:#f9fffb}
+    .backup-actions{display:grid;gap:9px;margin-top:13px}
+    .backup-import-label{display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
   </style>
 </head>
 <body>
  <main class="wrap">
   <header class="top">
-   <div><p class="eyebrow">La mia lista intelligente</p><h1>La mia spesa</h1></div>
+   <div><p class="eyebrow">🧪 Versione Laboratorio · Backup 1</p><h1>La mia spesa</h1></div>
    <div class="logo" aria-hidden="true">🛒</div>
   </header>
   <section class="summary" aria-label="Riepilogo spesa">
@@ -248,6 +251,17 @@
     <div><span>Risparmio</span><strong id="saving">0,00 €</strong></div>
     <div><span>Prodotti</span><strong id="count">0</strong></div>
    </div>
+  </section>
+
+  <section class="section backup-section" aria-labelledby="backup-title">
+    <div class="section-head"><h2 id="backup-title">🔐 Backup del Laboratorio</h2></div>
+    <p class="hint">Questa versione conserva i propri dati separatamente dall'app originale. Il backup include carrello, sconti, nomi associati ai barcode e storico degli scontrini controllati.</p>
+    <div class="backup-actions">
+      <button class="primary" id="backup-export" type="button">⬇️ Salva backup completo</button>
+      <label class="secondary backup-import-label" for="backup-import">⬆️ Ripristina un backup</label>
+      <input type="file" id="backup-import" accept=".json,application/json" hidden>
+    </div>
+    <p id="backup-status" class="hint" role="status" aria-live="polite">Il backup viene salvato in un file sul tuo iPhone. Nessun dato viene inviato a un server.</p>
   </section>
 
   <section class="section voice-section" aria-labelledby="voice-title" id="voice-section">
@@ -292,7 +306,7 @@
   </section>
 
   <section class="section barcode-section" id="barcode-section" aria-labelledby="barcode-title">
-   <div class="section-head"><h2 id="barcode-title">▥ Lettore codice a barre</h2><span class="voice-tag">BARCODE 3 · aggiornato</span></div>
+   <div class="section-head"><h2 id="barcode-title">▥ Lettore codice a barre</h2><span class="voice-tag">BARCODE 3</span></div>
    <p class="hint">Inquadra il codice EAN del prodotto: non serve leggere tutte le scritte sull’etichetta. L’app cerca il nome nel suo archivio locale oppure online. Se un codice interno del supermercato contiene solo un prezzo, puoi <strong>fotografare o dettare il nome</strong>: verrà ricordato per le prossime scansioni compatibili. <strong>Prezzi e sconti del negozio non sono normalmente nel codice.</strong></p>
    <div id="barcode-reader" aria-label="Inquadratura codice a barre"></div>
    <div class="barcode-buttons"><button class="primary" type="button" id="barcode-start">▥ Leggi codice</button><button class="secondary" type="button" id="barcode-stop" disabled>Ferma</button></div>
@@ -403,13 +417,6 @@
    <div id="empty" class="empty"><div class="empty-symbol" aria-hidden="true">🛍️</div>La tua lista è vuota.<br>Aggiungi il primo prodotto!</div>
    <div class="tools" id="list-tools" hidden><button class="secondary" type="button" id="export">Esporta lista</button><button class="small-btn" type="button" id="clear">Svuota lista</button></div>
   </section>
-  <section class="section" aria-labelledby="backup-title">
-   <div class="section-head"><h2 id="backup-title">🛡️ Backup dei tuoi dati</h2></div>
-   <p class="hint">Salva carrello, archivio barcode e scontrini controllati nell’app File.</p>
-   <div class="tools"><button class="secondary" type="button" id="backup-export">Salva backup JSON</button><label for="backup-import" class="secondary">Ripristina backup</label></div>
-   <input id="backup-import" type="file" accept=".json,application/json" hidden>
-   <p class="hint">Il ripristino sostituisce i dati attuali. Salva prima una copia di sicurezza.</p>
-  </section>
   <section class="section" aria-labelledby="photo-title">
    <div class="section-head"><h2 id="photo-title">📷 Leggi prezzo e sconto da una foto</h2></div>
    <div class="camera-zone">
@@ -466,7 +473,25 @@
  (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const money=c=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(c/100);
- const KEY='la-mia-spesa-dati-v1';
+ // Prima apertura: crea una COPIA separata dei dati esistenti, senza modificare l'app originale.
+ const LAB_STORAGE_KEYS=[
+   ['la-mia-spesa-dati-v1','la-mia-spesa-lab-dati-v1'],
+   ['la-mia-spesa-scontrini-controllati-v1','la-mia-spesa-lab-scontrini-v1'],
+   ['la-mia-spesa-codici-v1','la-mia-spesa-lab-codici-v1']
+ ];
+ try{
+   const labInitialized='la-mia-spesa-lab-inizializzato-v1';
+   if(localStorage.getItem(labInitialized)!=='1'){
+     for(const [originale,laboratorio] of LAB_STORAGE_KEYS){
+       if(localStorage.getItem(laboratorio)===null){
+         const valore=localStorage.getItem(originale);
+         if(valore!==null)localStorage.setItem(laboratorio,valore);
+       }
+     }
+     localStorage.setItem(labInitialized,'1');
+   }
+ }catch(e){ /* Safari puo' impedire la memorizzazione */ }
+ const KEY='la-mia-spesa-lab-dati-v1';
  let state={items:[],discount:0};let saved=false;
  let reviewOrigin='photo', livePending=null;
  function placeReview(where){
@@ -536,7 +561,7 @@
    const cents=parsePrice(price);if(cents===null){showToast('Prezzo non valido');return;}
    const discount=prompt('Sconto prodotto in percentuale (0–100)',String(x.productDiscount||0));if(discount===null)return;
    const pct=validPercent(discount);if(pct===null){showToast('Sconto non valido: usa 0–100');return;}
-   x.name=name.trim().slice(0,90);x.cents=cents;x.productDiscount=pct;if(pct>0){x.lockedFinal=false;x.skipGeneralDiscount=true;}else if(!x.lockedFinal){x.skipGeneralDiscount=false;}save();render();showToast('Prodotto modificato');
+   x.name=name.trim().slice(0,90);x.cents=cents;x.productDiscount=pct;save();render();showToast('Prodotto modificato');
  }
  $('product-form').addEventListener('submit',e=>{
    e.preventDefault();const name=$('product-name').value.trim(),cents=parsePrice($('product-price').value),qty=Number($('product-qty').value),pct=validPercent($('product-discount').value||'0');
@@ -544,7 +569,7 @@
    if(cents===null){showToast('Inserisci un prezzo valido, es. 2,50');return;}
    if(!Number.isInteger(qty)||qty<1||qty>999){showToast('Quantità valida: da 1 a 999');return;}
    if(pct===null){showToast('Sconto prodotto valido: 0–100%');return;}
-   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name,cents,qty,productDiscount:pct,skipGeneralDiscount:pct>0});save();render();
+   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name,cents,qty,productDiscount:pct});save();render();
    $('product-name').value='';$('product-price').value='';$('product-discount').value='0';$('product-qty').value='1';$('product-name').focus();showToast('Aggiunto alla lista');
  });
  function setDiscount(v){const n=Number(v);state.discount=Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n))):0;save();render();}
@@ -558,35 +583,6 @@
    const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
    const lines=['Prodotto;Prezzo registrato (EUR);Sconto prodotto (%);Quantita;Totale prodotto (EUR);Prezzo finale da scontrino',...state.items.map(x=>[esc(x.name),(x.cents/100).toFixed(2).replace('.',','),x.productDiscount||0,x.qty,(unitNet(x)*x.qty/100).toFixed(2).replace('.',','),x.lockedFinal?'SI':'NO'].join(';'))];
    const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='la-mia-spesa.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);showToast('Lista esportata');
- });
- $('backup-export').addEventListener('click',()=>{
-   const keys=['la-mia-spesa-dati-v1','la-mia-spesa-codici-v1','la-mia-spesa-scontrini-controllati-v1'];
-   const data={format:'la-mia-spesa-backup',version:1,created:new Date().toISOString(),storage:{}};
-   keys.forEach(k=>data.storage[k]=localStorage.getItem(k));
-   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-   const a=document.createElement('a');a.href=url;a.download='la-mia-spesa-backup.json';document.body.append(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),30000);showToast('Backup pronto: salvalo in File.');
- });
- $('backup-import').addEventListener('change',async e=>{
-   const f=e.target.files&&e.target.files[0];if(!f)return;
-   try{
-     if(f.size>5*1024*1024)throw Error('File troppo grande.');
-     const data=JSON.parse(await f.text()),keys=['la-mia-spesa-dati-v1','la-mia-spesa-codici-v1','la-mia-spesa-scontrini-controllati-v1'];
-     if(data.format!=='la-mia-spesa-backup'||data.version!==1||!data.storage)throw Error('Backup non riconosciuto.');
-     for(const k of keys){
-       const raw=data.storage[k];if(raw!==null&&typeof raw!=='string')throw Error('Dati non validi.');
-       if(raw!==null){
-         const v=JSON.parse(raw);
-         if(k===keys[0]&&(!v||!Array.isArray(v.items)||!Number.isFinite(v.discount)))throw Error('Carrello non valido.');
-         if(k===keys[1]&&(!v||typeof v!=='object'||Array.isArray(v)))throw Error('Archivio barcode non valido.');
-         if(k===keys[2]&&!Array.isArray(v))throw Error('Scontrini non validi.');
-       }
-     }
-     if(!confirm('Ripristinare il backup? Sostituirà i dati attuali.'))return;
-     keys.forEach(k=>data.storage[k]===null?localStorage.removeItem(k):localStorage.setItem(k,data.storage[k]));
-     alert('Ripristino completato.');location.reload();
-   }catch(err){alert('Ripristino non eseguito: '+err.message);}
-   finally{e.target.value='';}
  });
  // Sulle etichette a peso il PREZZO €/kg NON e' l'importo da inserire.
  // Legge le colonne «Prezzo €/kg» e «Importo €» e, se possibile,
@@ -861,7 +857,7 @@
    if(cents===null){showToast('Controlla il prezzo, es. 3,02');$('review-price').focus();return;}
    if(!Number.isInteger(qty)||qty<1||qty>999){showToast('Quantità da 1 a 999');return;}
    if(pct===null){showToast('Sconto non valido: inserisci da 0 a 100');return;}
-   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name,cents,qty,productDiscount:pct,skipGeneralDiscount:pct>0});save();render();
+   state.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,9),name,cents,qty,productDiscount:pct});save();render();
    $('review').hidden=true;
    if(reviewOrigin==='live'){
      if(livePending)seenLiveKeys.add(livePending.key);
@@ -990,7 +986,7 @@
  }
 
  // --- Analisi scontrino separata e prudente: mai importare il totale come prodotto. ---
- const RECEIPT_KEY='la-mia-spesa-scontrini-controllati-v1';
+ const RECEIPT_KEY='la-mia-spesa-lab-scontrini-v1';
  let receiptDraft=null,receiptTextSource='',receiptWorkerBusy=false,receiptFile=null;
  let receiptTotalEntered=false,receiptManualTotalCents=null;
  let receiptScanParts=[],receiptScanKeys=[];
@@ -1088,7 +1084,7 @@
      const unitCents=Math.round(last.cents/qty),reconstructed=unitCents*qty;
      const uncertain=(tokens.length>1&&!q)||reconstructed!==last.cents||/\b(?:KG|ETTO|\/\s*KG|\/\s*PZ|PESO)\b/i.test(line)||guessedTax;
      if(uncertain)ambiguousRows++;
-     rows.push({name:(reconstructed!==last.cents?name+' (x'+qty+')':name).slice(0,85),cents:reconstructed!==last.cents?last.cents:unitCents,qty:reconstructed!==last.cents?1:qty,selected:true,uncertain,origin:line});
+     rows.push({name:name.slice(0,85),cents:unitCents,qty,selected:true,uncertain,origin:line});
      if(rows.length===80){notes.push('Troppe righe rilevate: le successive non sono state incluse nella proposta.');break;}
    }
    // Non sommare per errore due letture della STESSA riga riconosciuta in foto sovrapposte.
@@ -1496,6 +1492,7 @@
          $('photo-status').textContent='⚠️ Ho letto un importo elevato: se la foto è uno scontrino usa «Usa questa foto per leggere lo scontrino», invece di confermare un singolo prodotto.';
        }
        showReview(name,offer.baseCents??(chosen?chosen.cents:null),true,offer);
+       if(chosen && !$('product-price').value.trim())$('product-price').value=(chosen.cents/100).toFixed(2).replace('.',',');
        if(!chosen || chosen.cents<3000)$('photo-status').textContent=(name?'Nome possibile: '+name+'. ':'Nome non leggibile: inseriscilo tu. ')
          +(chosen?'Prezzo possibile: '+money(offer.baseCents??chosen.cents)+'. ':'Prezzo non leggibile: inseriscilo tu. ')
          +(offer.found?' '+offer.note:' Nessuno sconto promozionale sicuro rilevato.')
@@ -1774,7 +1771,6 @@
    }
  }
  async function startLive(){
-   if(barcodeActive)await barcodeStop();
    stopLive();
    if(livePending){livePending=null;$('review').hidden=true;}
    const run=++liveRound;
@@ -1849,7 +1845,7 @@
 
 
  // Lettura EAN: usa html5-qrcode solo quando richiesto (compatibile con Safari iOS).
- const BARCODE_KEY='la-mia-spesa-codici-v1';
+ const BARCODE_KEY='la-mia-spesa-lab-codici-v1';
  let barcodeScanner=null,barcodeActive=false,barcodeReady=false,barcodeLocked=false,barcodeCurrent='',barcodeEpoch=0,barcodeVideoObserver=null,barcodeWatch=null;
  let barcodeHistory={};
  try{const v=JSON.parse(localStorage.getItem(BARCODE_KEY));if(v&&typeof v==='object'&&!Array.isArray(v))barcodeHistory=v;}catch(e){}
@@ -2319,6 +2315,56 @@
    $('voice-text').value=btn.getAttribute('data-voice-question');voiceInterpret(false);
  }));
  for(const id of ['voice-name','voice-price','voice-qty','voice-pct','voice-kind'])$(id).addEventListener('input',voiceUpdatePreview);
+
+ // Esporta e ripristina esclusivamente le chiavi del laboratorio.
+ function backupSnapshot(){
+   const payload={format:'la-mia-spesa-laboratorio-backup',version:1,createdAt:new Date().toISOString(),data:{}};
+   for(const [,labKey] of LAB_STORAGE_KEYS){
+     const raw=localStorage.getItem(labKey);
+     payload.data[labKey]=raw===null?null:JSON.parse(raw);
+   }
+   // Usa lo stato corrente anche se il salvataggio nel browser non fosse riuscito.
+   payload.data[KEY]=state;
+   payload.data[RECEIPT_KEY]=receiptImports;
+   payload.data[BARCODE_KEY]=barcodeHistory;
+   return payload;
+ }
+ $('backup-export').addEventListener('click',()=>{
+   try{
+     const payload=backupSnapshot();
+     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+     const url=URL.createObjectURL(blob),a=document.createElement('a');
+     a.href=url;a.download='backup-la-mia-spesa-laboratorio-'+new Date().toISOString().slice(0,10)+'.json';
+     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+     $('backup-status').textContent='✅ Backup preparato. Controlla la cartella Download del tuo iPhone.';
+   }catch(e){$('backup-status').textContent='⚠️ Non riesco a creare il backup: '+String(e.message||e);}
+ });
+ $('backup-import').addEventListener('change',async e=>{
+   const file=e.target.files?.[0];if(!file)return;
+   try{
+     if(file.size>5000000)throw new Error('File troppo grande (massimo 5 MB).');
+     const incoming=JSON.parse(await file.text());
+     if(incoming?.format!=='la-mia-spesa-laboratorio-backup'||incoming.version!==1||!incoming.data)throw new Error('Questo non e un backup valido del laboratorio.');
+     const data=incoming.data,cart=data[KEY],receipts=data[RECEIPT_KEY],barcodes=data[BARCODE_KEY];
+     if(!cart||!Array.isArray(cart.items)||!Number.isFinite(cart.discount)||cart.discount<0||cart.discount>100||cart.items.length>10000)throw new Error('Dati del carrello non validi.');
+     for(const item of cart.items){
+       if(!item||typeof item.name!=='string'||item.name.length>90||!Number.isSafeInteger(item.cents)||item.cents<0||!Number.isInteger(item.qty)||item.qty<1||item.qty>999)throw new Error('Uno dei prodotti non e valido.');
+     }
+     if(!Array.isArray(receipts)||receipts.length>1000||!receipts.every(x=>typeof x==='string'))throw new Error('Storico scontrini non valido.');
+     if(!barcodes||typeof barcodes!=='object'||Array.isArray(barcodes)||Object.keys(barcodes).length>20000)throw new Error('Archivio barcode non valido.');
+     if(!confirm('Ripristinare il backup? I dati ATTUALI del solo laboratorio saranno sostituiti. L’app originale non verra modificata.'))return;
+     const prior=LAB_STORAGE_KEYS.map(([,key])=>[key,localStorage.getItem(key)]);
+     try{
+       localStorage.setItem(KEY,JSON.stringify(cart));
+       localStorage.setItem(RECEIPT_KEY,JSON.stringify(receipts));
+       localStorage.setItem(BARCODE_KEY,JSON.stringify(barcodes));
+       localStorage.setItem('la-mia-spesa-lab-inizializzato-v1','1');
+     }catch(err){for(const [key,value] of prior){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(e){}}throw err;}
+     $('backup-status').textContent='✅ Backup ripristinato. Aggiornamento della pagina…';
+     location.reload();
+   }catch(err){$('backup-status').textContent='⚠️ Ripristino non eseguito: '+String(err.message||err);}
+   finally{e.target.value='';}
+ });
 
  render();
  })();
